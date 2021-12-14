@@ -180,27 +180,18 @@ def stringify_winner(
         return short_result
 
 
-def stringify_voter_count(voter_id: str, vote_count: int) -> str:
-    plurals = "s" if vote_count > 1 else ""
-    return f'{voter_id} voted on {vote_count} paper{plurals}'
+def stringify_voter_count(voter_id: str, votes_count: int) -> str:
+    votes_diff = ARGS["max_user_votes"] - votes_count
 
-
-def stringify_under_voter(voter_id: str, vote_count: int) -> str:
-    plurals_count = "s" if vote_count > 1 else ""
-    votes_diff = ARGS["max_user_votes"] - vote_count
+    plurals_count = "s" if votes_count > 1 else ""
     plurals_diff = "s" if votes_diff > 1 else ""
-    return (
-        f'{voter_id} voted on {vote_count} paper{plurals_count} only '
-        f'(is eligible for {votes_diff} more vote{plurals_diff})')
 
-
-def stringify_over_voter(voter_id: str, vote_count: int) -> str:
-    plurals_count = "s" if vote_count > 1 else ""
-    votes_diff = vote_count - ARGS["max_user_votes"]
-    plurals_diff = "s" if votes_diff > 1 else ""
-    return (
-        f'{voter_id} votes on {vote_count} paper{plurals_count} '
-        f'({votes_diff} vote{plurals_diff} could be removed)')
+    msg = f'{voter_id} voted on {votes_count} paper{plurals_count}'
+    if votes_diff < 0:
+        msg += f'only (is eligible for {votes_diff} more vote{plurals_diff})'
+    elif votes_diff > 0:
+        msg += f' ({votes_diff} vote{plurals_diff} could be removed)'
+    return msg
 
 
 # View Functions
@@ -214,12 +205,7 @@ def voters_view(
     comments: List[dict]
 ) -> None:
     for user_id, vote_count in count_votes_by_users(votes):
-        if vote_count > ARGS['max_user_votes']:
-            print(stringify_over_voter(user_id, vote_count))
-        elif vote_count == ARGS['max_user_votes']:
-            print(stringify_voter_count(user_id, vote_count))
-        elif vote_count < ARGS['max_user_votes']:
-            print(stringify_under_voter(user_id, vote_count))
+        print(stringify_voter_count(user_id, vote_count))
 
     active_users = get_collaborators(comments)
     absent_voters = get_absent_voters(votes, active_users)
