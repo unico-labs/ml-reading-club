@@ -64,8 +64,9 @@ def get_authorization_headers() -> dict:
 
 # API Requests
 def request_repo_comments() -> List[dict]:
-    url = (f'{ARGS["api_url"]}/repos/{ARGS["organization"]}'
-           f'/{ARGS["repository"]}/issues/comments')
+    url = (f'{ARGS["api_url"]}/repos/'
+           f'{ARGS["organization"]}/{ARGS["repository"]}/'
+           'issues/comments')
 
     response = requests.get(url, headers=get_authorization_headers())
     response.raise_for_status()
@@ -74,8 +75,9 @@ def request_repo_comments() -> List[dict]:
 
 
 def request_collaborators() -> List[dict]:
-    url = (f'{ARGS["api_url"]}/repos/{ARGS["organization"]}'
-           f'/{ARGS["repository"]}/collaborators')
+    url = (f'{ARGS["api_url"]}/repos/'
+           f'{ARGS["organization"]}/{ARGS["repository"]}/'
+           'collaborators')
     response = requests.get(url, headers=get_authorization_headers())
     response.raise_for_status()
     return response.json()
@@ -110,26 +112,36 @@ def format_comment(comment: dict) -> dict:
 
 # Controller functions
 def get_comments() -> List[dict]:
+    comments = request_repo_comments()
+    if ARGS['users']:
+        comments = filter(
+            lambda cmt: cmt['user']['login'] in ARGS['users'], comments)
+    if ARGS['issues']:
+        comments = filter(
+            lambda cmt: cmt['issue'] in ARGS['issues'], comments)
     return list(map(format_comment, request_repo_comments()))
 
 
-def get_votes(comments: List[dict]) -> List[dict]:
-    votes = list(filter(lambda comment: comment['body'] == 'THIS', comments))
-    if ARGS['users']:
-        votes = list(filter(
-            lambda vote: vote['user'] in ARGS['users'], votes))
-    if ARGS['issues']:
-        votes = list(filter(
-            lambda vote: vote['issue'] in ARGS['issues'], votes))
-    return votes
-
-
 def get_collaborators(comments: List[dict]) -> Set[str]:
-    return set(map(lambda user: user['login'], request_collaborators()))
+    collaborators = set(map(
+        lambda user: user['login'], request_collaborators()))
+    if ARGS['users']:
+        collaborators = collaborators.intersection(ARGS['users'])
+    return sorted(collaborators)
+
+
+def get_votes(comments: List[dict]) -> List[dict]:
+    return list(filter(
+        lambda comment: comment['body'] == 'THIS', comments))
+
+
+def delete_votes(votes: List[dict]) -> None:
+    for vote in votes:
+        request_vote_delete(vote)
 
 
 def get_absent_voters(votes: List[dict], active_users: List[str]) -> Set[str]:
-    return active_users.difference(
+    return set(active_users).difference(
         set(map(lambda vote: vote['user'], votes)))
 
 
