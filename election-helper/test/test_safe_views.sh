@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VIEWS="winners voters clear"
+# not testing clear view because repository is not mocked
+VIEWS="winners voters"
 
 for view in $VIEWS; do
     echo "Testing view $view"
