@@ -3,7 +3,6 @@ import os
 from typing import List, Tuple, Set
 
 import argparse
-import bs4
 import requests
 
 
@@ -89,6 +88,15 @@ def request_vote_delete(vote: dict) -> None:
     ).raise_for_status()
 
 
+def request_issue(issue_id: str):
+    url = (f'{ARGS["api_url"]}/repos/'
+           f'{ARGS["organization"]}/{ARGS["repository"]}/'
+           f'issues/{issue_id}')
+    response = requests.get(url, headers=get_authorization_headers())
+    response.raise_for_status()
+    return response.json()
+
+
 # Requests Formatting
 def format_comment(comment: dict) -> dict:
     return {
@@ -125,9 +133,8 @@ def get_absent_voters(votes: List[dict], active_users: List[str]) -> Set[str]:
         set(map(lambda vote: vote['user'], votes)))
 
 
-def delete_votes(votes: List[dict]) -> None:
-    for vote in votes:
-        request_vote_delete(vote)
+def get_issue_title(issue_id: str):
+    return request_issue(issue_id)["title"]
 
 
 def count_votes_on_issues(
@@ -164,12 +171,7 @@ def stringify_winner(
 ) -> str:
     issue_url = (f'https://github.com/{ARGS["organization"]}'
                  f'/{ARGS["repository"]}/issues/{issue_id}')
-
-    response = requests.get(issue_url, headers=get_authorization_headers())
-    response.raise_for_status()
-
-    html = bs4.BeautifulSoup(response.text, features='lxml')
-    issue_title = html.find('main').find('span', class_='js-issue-title').text
+    issue_title = get_issue_title(issue_id)
 
     short_result = (f'{issue_title} (#{issue_id}) has received '
                     f'{vote_count} votes. ({issue_url})')
