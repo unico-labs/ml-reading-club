@@ -161,7 +161,7 @@ def stringify_names(
     if len(names) == 1:
         return str(names[0])
     else:
-        return sep.join(names[:-1]) + f'and {names[-1]}'
+        return sep.join(names[:-1]) + f' and {names[-1]}'
 
 
 def stringify_winner(
@@ -214,7 +214,6 @@ def voters_view(
     if len(absent_voters) == 0:
         print("All active users voted the present election.")
     else:
-        print(absent_voters)
         verb = "has" if len(absent_voters) == 1 else "have"
         print(f'Also, {stringify_names(list(absent_voters))} '
               f'{verb} not voted yet.')
