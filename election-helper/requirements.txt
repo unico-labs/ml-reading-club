@@ -1,5 +1,5 @@
 argparse==1.4.0
-certifi==2021.10.8
+certifi==2022.12.7
 charset-normalizer==2.0.8
 idna==3.3
 requests==2.26.0
